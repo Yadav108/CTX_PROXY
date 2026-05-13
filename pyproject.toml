@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ctx-proxy"
+version = "0.1.0"
+description = "Transparent context-management proxy for LLM APIs"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "httpx",
+    "tiktoken",
+    "anthropic",
+    "openai",
+    "typer",
+]
+
+[project.scripts]
+ctx-proxy = "ctx_proxy.cli:app"
