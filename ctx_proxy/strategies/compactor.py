@@ -1,5 +1,7 @@
 """CompactionStrategy — two-stage pipeline that compresses conversation history then rebuilds a minimal context window."""
 
+from typing import TYPE_CHECKING
+
 from fastapi import Response
 
 from ctx_proxy.config import COMPACT_MODEL
@@ -7,6 +9,9 @@ from ctx_proxy.model_client import ModelClient
 from ctx_proxy.session import Session, SessionManager
 from ctx_proxy.strategies.base import Strategy
 from ctx_proxy.tokenizer import count_tokens_delta
+
+if TYPE_CHECKING:
+    from ctx_proxy.forwarder import Forwarder
 
 KEEP_KEYWORDS = {"decided", "fixed", "error", "architecture", "todo", "breaking"}
 
