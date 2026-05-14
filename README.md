@@ -6,7 +6,7 @@ A local reverse proxy that sits between your code and LLM APIs, auto-compacting 
 
 - Intercepts LLM API calls transparently
 - Tracks token usage per session
-- Auto-compacts context when approaching limits (soft: 75%, hard: 85%)
+- Auto-compacts context when approaching limits (soft: 75%, hard: 90%)
 - Exports session snapshots as .ctx + .md files
 - Works with Anthropic, OpenAI, and any OpenAI-compatible API (e.g. OpenRouter)
 
@@ -19,30 +19,53 @@ pip install -e ".[dev]"
 
 ## Quick start
 
-```bash
-export UPSTREAM_URL="https://api.openai.com"
-export API_KEY="your-api-key"
+### 1. Install
+pip install ctx-proxy
+
+For development:
+git clone https://github.com/Yadav108/CTX_PROXY.git
+cd CTX_PROXY
+pip install -e ".[dev]"
+
+### 2. Set environment variables
+Set these before starting the proxy:
+
+Windows (PowerShell):
+$env:UPSTREAM_URL = "https://openrouter.ai/api/v1/chat/completions"
+$env:API_KEY = "your-api-key-here"
+
+Linux/macOS:
+export UPSTREAM_URL="https://openrouter.ai/api/v1/chat/completions"
+export API_KEY="your-api-key-here"
+
+UPSTREAM_URL can point to any OpenAI-compatible endpoint (OpenRouter, OpenAI, Anthropic, local models via Ollama, etc.)
+
+### 3. Start the proxy
 ctx-proxy start
-```
 
-In your code, change one line:
+Proxy runs at http://localhost:8000
 
-```python
-base_url = "http://localhost:8000"
-```
+### 4. Change one line in your code
+Before:
+client = openai.OpenAI(api_key="your-key")
+
+After:
+client = openai.OpenAI(base_url="http://localhost:8000", api_key="your-key")
+
+That's it. ctx-proxy handles everything else transparently.
 
 ## CLI commands
 
 - `ctx-proxy start`
-- `ctx-proxy clear`
+- `ctx-proxy clear` (evicts stale sessions and removes orphaned `.json` files)
 
 ## Environment variables
 
 | Variable | Default | What it does |
 | --- | --- | --- |
-| `UPSTREAM_URL` | `https://api.openai.com` | Upstream LLM API endpoint the proxy forwards to. |
+| `UPSTREAM_URL` | `https://api.anthropic.com/v1/messages` | Upstream LLM API endpoint the proxy forwards to. |
 | `API_KEY` | empty | API key used when forwarding requests upstream. |
-| `COMPACT_MODEL` | unset | Model used for context compaction when set. |
+| `COMPACT_MODEL` | `gpt-4o-mini` | Model used for context compaction. |
 
 ## Session files
 
