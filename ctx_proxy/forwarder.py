@@ -32,7 +32,7 @@ class Forwarder:
             k: v for k, v in (headers or {}).items()
             if k.lower() in SAFE_HEADERS
         }
-        if "authorization" in clean_headers and "x-api-key" not in clean_headers:
+        if "authorization" in clean_headers and "x-api-key" not in clean_headers and "anthropic.com" in self.upstream_url:
             token = clean_headers.pop("authorization").removeprefix("Bearer ").removeprefix("bearer ")
             clean_headers["x-api-key"] = token
 

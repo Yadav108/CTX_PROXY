@@ -8,7 +8,10 @@ import warnings
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ctx_proxy.snapshot import SnapshotManager
 
 CONTEXT_LIMITS: dict[str, int] = {
     "claude-opus-4-5":    200_000,
@@ -72,9 +75,10 @@ class Session:
 
 
 class SessionManager:
-    def __init__(self) -> None:
+    def __init__(self, snapshot_manager: "SnapshotManager | None" = None) -> None:
         _STORAGE_DIR.mkdir(parents=True, exist_ok=True)
         self._sessions: dict[str, Session] = {}
+        self._snapshot_manager = snapshot_manager
 
     # ------------------------------------------------------------------
     # Public API
@@ -135,17 +139,21 @@ class SessionManager:
         session.last_seen      = _utcnow()
         self._write_to_disk(session)
 
-    def evict_stale(self) -> None:
+    def evict_stale_sessions(self) -> list[str]:
         now = _utcnow()
         to_evict = [
             sid
-            for sid, s in self._sessions.items()
-            if (s.snapshot is None and (now - s.created_at).total_seconds() > _24H)
-            or (now - s.created_at).total_seconds() > _7D
+            for sid, session in self._sessions.items()
+            if (now - session.last_seen).total_seconds() > _7D
+            or (
+                (now - session.last_seen).total_seconds() > _24H
+                and session.persisted is False
+            )
         ]
         for sid in to_evict:
             del self._sessions[sid]
             (_STORAGE_DIR / f"{sid}.json").unlink(missing_ok=True)
+        return to_evict
 
     # ------------------------------------------------------------------
     # Private helpers
@@ -175,6 +183,8 @@ class SessionManager:
         (_STORAGE_DIR / f"{session.session_id}.json").write_text(
             json.dumps(data, indent=2)
         )
+        if self._snapshot_manager is not None:
+            self._snapshot_manager.save(session)
 
     def _load_from_disk(self, session_id: str) -> Optional[Session]:
         path = _STORAGE_DIR / f"{session_id}.json"
