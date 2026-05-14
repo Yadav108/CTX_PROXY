@@ -3,7 +3,9 @@
 ## Getting started
 
 - Fork the repo
-- Clone locally
+- Clone locally:
+  `git clone https://github.com/Yadav108/CTX_PROXY.git`
+  `cd CTX_PROXY`
 - `pip install -e ".[dev]"`
 
 ## Development workflow
@@ -15,7 +17,7 @@
 
 ## Adding a new LLM provider
 
-Providers are handled via the `UPSTREAM_URL` environment variable, so no code changes are needed for OpenAI-compatible APIs. For non-compatible APIs, add a new strategy in `ctx_proxy/strategies/`.
+Providers are handled via the `UPSTREAM_URL` environment variable, so no code changes are needed for OpenAI-compatible endpoints. For non-compatible APIs, add a new strategy in `ctx_proxy/strategies/`.
 
 ## Submitting a PR
 
