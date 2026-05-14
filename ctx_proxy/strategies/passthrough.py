@@ -1,9 +1,14 @@
 """PassthroughStrategy — forwards the message list to the LLM unchanged, with no compaction."""
 
+from typing import TYPE_CHECKING
+
 from fastapi import Response
 from ctx_proxy.strategies.base import Strategy
 from ctx_proxy.session import Session, SessionManager
 from ctx_proxy.tokenizer import count_tokens_delta
+
+if TYPE_CHECKING:
+    from ctx_proxy.forwarder import Forwarder
 
 
 class PassthroughStrategy(Strategy):
