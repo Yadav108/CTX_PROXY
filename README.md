@@ -1,5 +1,6 @@
-# ctx-proxy
+# ctx_proxy
 
+Feature/ctx-proxy-sidecars
 A local reverse proxy that sits between your code and LLM APIs, auto-compacting context before hitting token limits.
 
 ## What it does
@@ -78,3 +79,5 @@ Session files live in `~/.ctx-proxy/sessions/`.
 ## Contributing
 
 See `CONTRIBUTING.md` (to be added).
+=======
+A transparent proxy that sits between any OpenAI/Anthropic-compatible client and the real LLM API, automatically managing context-window limits through configurable compaction strategies.

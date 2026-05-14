@@ -17,13 +17,5 @@ dependencies = [
     "typer",
 ]
 
-[project.optional-dependencies]
-dev = [
-    "pytest",
-    "pytest-asyncio",
-    "httpx",
-    "ruff",
-]
-
 [project.scripts]
 ctx-proxy = "ctx_proxy.cli:app"
