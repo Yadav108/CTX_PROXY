@@ -1,83 +1,98 @@
-# ctx_proxy
+# ctx-proxy
 
-Feature/ctx-proxy-sidecars
 A local reverse proxy that sits between your code and LLM APIs, auto-compacting context before hitting token limits.
 
 ## What it does
 
 - Intercepts LLM API calls transparently
 - Tracks token usage per session
-- Auto-compacts context when approaching limits (soft: 75%, hard: 90%)
-- Exports session snapshots as .ctx + .md files
-- Works with Anthropic, OpenAI, and any OpenAI-compatible API (e.g. OpenRouter)
+- Filters noisy history at 75% utilization (no model call)
+- Compacts context via a summary model at 90% utilization
+- Exports session snapshots as `.ctx` and `.md` files
+- Works with Anthropic, OpenAI, and any OpenAI-compatible API
 
 ## Installation
 
 ```bash
 pip install ctx-proxy
+```
+
+For development:
+
+```bash
+git clone https://github.com/Yadav108/CTX_PROXY.git
+cd CTX_PROXY
 pip install -e ".[dev]"
 ```
 
 ## Quick start
 
-### 1. Install
-pip install ctx-proxy
+### 1. Set environment variables
 
-For development:
-git clone https://github.com/Yadav108/CTX_PROXY.git
-cd CTX_PROXY
-pip install -e ".[dev]"
-
-### 2. Set environment variables
-Set these before starting the proxy:
-
-Windows (PowerShell):
+**Windows (PowerShell):**
+```powershell
 $env:UPSTREAM_URL = "https://openrouter.ai/api/v1/chat/completions"
 $env:API_KEY = "your-api-key-here"
+```
 
-Linux/macOS:
+**Linux/macOS:**
+```bash
 export UPSTREAM_URL="https://openrouter.ai/api/v1/chat/completions"
 export API_KEY="your-api-key-here"
+```
 
-UPSTREAM_URL can point to any OpenAI-compatible endpoint (OpenRouter, OpenAI, Anthropic, local models via Ollama, etc.)
+`UPSTREAM_URL` can point to any OpenAI-compatible endpoint (OpenRouter, OpenAI, Anthropic, Ollama, etc.)
 
-### 3. Start the proxy
+### 2. Start the proxy
+
+```bash
 ctx-proxy start
+```
 
-Proxy runs at http://localhost:8000
+Proxy runs at `http://localhost:8000`
 
-### 4. Change one line in your code
+### 3. Change one line in your code
+
 Before:
+```python
 client = openai.OpenAI(api_key="your-key")
+```
 
 After:
+```python
 client = openai.OpenAI(base_url="http://localhost:8000", api_key="your-key")
+```
 
 That's it. ctx-proxy handles everything else transparently.
 
 ## CLI commands
 
-- `ctx-proxy start`
-- `ctx-proxy clear` (evicts stale sessions and removes orphaned `.json` files)
+```bash
+ctx-proxy start                  # start the proxy on localhost:8000
+ctx-proxy start --port 9000      # custom port
+ctx-proxy start --resume latest  # resume the most recent session
+ctx-proxy clear                  # evict stale sessions
+```
 
 ## Environment variables
 
 | Variable | Default | What it does |
-| --- | --- | --- |
-| `UPSTREAM_URL` | `https://api.anthropic.com/v1/messages` | Upstream LLM API endpoint the proxy forwards to. |
-| `API_KEY` | empty | API key used when forwarding requests upstream. |
-| `COMPACT_MODEL` | `gpt-4o-mini` | Model used for context compaction. |
+|---|---|---|
+| `UPSTREAM_URL` | `https://api.anthropic.com/v1/messages` | Upstream LLM API endpoint |
+| `API_KEY` | _(empty)_ | API key forwarded upstream |
+| `COMPACT_MODEL` | `gpt-4o-mini` | Model used for context compaction |
+| `SOFT_LIMIT` | `0.75` | Utilization threshold for filter-only compaction |
+| `HARD_LIMIT` | `0.90` | Utilization threshold for full model compaction |
 
 ## Session files
 
 Session files live in `~/.ctx-proxy/sessions/`.
 
-- `.ctx` files store structured session snapshots.
-- `.md` files store a human-readable snapshot alongside the `.ctx` file.
-- `.json` files store session state used by the proxy.
+- `.ctx` — structured session snapshot (JSON)
+- `.md` — human-readable snapshot sidecar
+- `.json` — live session state used by the proxy
 
-## Contributing
+## License
 
-See `CONTRIBUTING.md` (to be added).
-=======
-A transparent proxy that sits between any OpenAI/Anthropic-compatible client and the real LLM API, automatically managing context-window limits through configurable compaction strategies.
+MIT
+````"
