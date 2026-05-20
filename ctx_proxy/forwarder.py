@@ -36,22 +36,30 @@ class Forwarder:
             token = clean_headers.pop("authorization").removeprefix("Bearer ").removeprefix("bearer ")
             clean_headers["x-api-key"] = token
 
+        client = httpx.AsyncClient(timeout=self.timeout)
+        response = await client.send(
+            client.build_request("POST", self.upstream_url, json=request, headers=clean_headers),
+            stream=True,
+        )
+        status_code = response.status_code
+        content_type = response.headers.get("content-type", "application/octet-stream")
+
         async def generator():
             try:
-                async with httpx.AsyncClient(timeout=self.timeout) as client:
-                    async with client.stream(
-                        "POST", self.upstream_url, json=request, headers=clean_headers
-                    ) as response:
-                        async for chunk in response.aiter_bytes():
-                            yield chunk
+                async for chunk in response.aiter_bytes():
+                    yield chunk
             except Exception as e:
                 warnings.warn(
                     f"Upstream request failed: {e}",
                     RuntimeWarning,
                     stacklevel=2,
                 )
+            finally:
+                await response.aclose()
+                await client.aclose()
 
         return StreamingResponse(
             generator(),
-            media_type="application/octet-stream",
+            status_code=status_code,
+            media_type=content_type,
         )
