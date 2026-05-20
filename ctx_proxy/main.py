@@ -11,8 +11,10 @@ from ctx_proxy.handler import Handler
 from ctx_proxy.model_client import ModelClient
 from ctx_proxy.router import CompactionRouter
 from ctx_proxy.session import SessionManager
+from ctx_proxy.snapshot import SnapshotManager
 from ctx_proxy.snapshot_loader import load_snapshot, load_snapshot_meta
 from ctx_proxy.strategies.compactor import CompactorStrategy
+from ctx_proxy.strategies.filter import FilterStrategy
 from ctx_proxy.strategies.passthrough import PassthroughStrategy
 
 
@@ -45,13 +47,16 @@ def create_app() -> FastAPI:
         resumed_session.snapshot = resume_context
     forwarder = Forwarder(upstream_url)
     model_client = ModelClient(api_key=api_key, upstream_url=upstream_url)
+    snapshot_manager = SnapshotManager()
     passthrough = PassthroughStrategy(session_manager=session_manager, forwarder=forwarder)
+    filter_strategy = FilterStrategy(session_manager=session_manager, forwarder=forwarder)
     compactor = CompactorStrategy(
         session_manager=session_manager,
         forwarder=forwarder,
         model_client=model_client,
+        snapshot_manager=snapshot_manager,
     )
-    router = CompactionRouter(passthrough=passthrough, compactor=compactor)
+    router = CompactionRouter(passthrough=passthrough, filter_strategy=filter_strategy, compactor=compactor)
     handler = Handler(router=router, session_manager=session_manager)
 
     app = FastAPI()

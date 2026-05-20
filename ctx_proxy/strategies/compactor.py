@@ -7,6 +7,7 @@ from fastapi import Response
 from ctx_proxy.config import COMPACT_MODEL
 from ctx_proxy.model_client import ModelClient
 from ctx_proxy.session import Session, SessionManager
+from ctx_proxy.snapshot import SnapshotManager
 from ctx_proxy.strategies.base import Strategy
 from ctx_proxy.tokenizer import count_tokens_delta
 
@@ -31,10 +32,12 @@ class CompactorStrategy(Strategy):
         session_manager: SessionManager,
         forwarder: "Forwarder",
         model_client: ModelClient,
+        snapshot_manager: SnapshotManager,
     ) -> None:
         self.session_manager = session_manager
         self.forwarder = forwarder
         self.model_client = model_client
+        self.snapshot_manager = snapshot_manager
 
     async def handle(
         self, request: dict, session: Session, headers: dict | None = None
@@ -97,6 +100,8 @@ class CompactorStrategy(Strategy):
             token_estimate=new_token_total,
             message_count=len(new_messages),
         )
+        session.snapshot = snapshot_text
+        self.snapshot_manager.save(session)
         return await self.forwarder.forward(rebuilt_request, session, headers=headers)
 
 
